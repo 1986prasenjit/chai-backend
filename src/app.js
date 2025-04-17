@@ -1,6 +1,6 @@
 import express from "express";
 
-import cookieParser from "cookie-parse";
+// import cookieParser from "cookie-parse";
 
 import cors from "cors";
 
@@ -23,4 +23,16 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 //!The cookie parser parses cookies and puts the cookie information on req object in the middleware.
-app.use(cookieParser());
+// app.use(cookieParser());
+
+
+//!Import the user route here
+import userRoute from "./routes/user.routes.js";
+
+
+
+//!Build the API and also use Middleware to write the route properly with best industry practice
+app.use("/api/v1/users", userRoute);
+
+
+export default app;
