@@ -1,6 +1,6 @@
 import express from "express";
 
-// import cookieParser from "cookie-parse";
+import cookieParser from "cookie-parser";
 
 import cors from "cors";
 
@@ -23,8 +23,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 //!The cookie parser parses cookies and puts the cookie information on req object in the middleware.
-// app.use(cookieParser());
+app.use(cookieParser());
 
+
+app.use(express.static("public"))
 
 //!Import the user route here
 import userRoute from "./routes/user.routes.js";
