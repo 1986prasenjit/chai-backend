@@ -8,6 +8,21 @@ import { ApiErrors } from "../utils/ApiErrors.js";
 
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
+const generateAccessTokenAndRefreshToken = async (userId) => {
+  try {
+    const user = await User.findById(userId);
+    const accessToken =   user.generateAccessToken();
+    const refreshToken =  user.generateRefreshToken();
+    // console.log(`Line no 16 ${accessToken}, ${refreshToken}`);
+
+    user.refreshToken = refreshToken;
+    await user.save({ validateBeforeSave: false });
+    return { accessToken, refreshToken };
+  } catch (error) {
+    throw new ApiErrors(500, "Something went wrong while creating the user");
+  }
+};
+
 const registerUser = asyncHandler(async (req, res) => {
   //get the data from the request.body
   //validate the data
@@ -100,4 +115,79 @@ const registerUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, createdUser, "User is Registered successfully"));
 });
 
-export { registerUser };
+const loginUser = asyncHandler(async (req, res) => {
+  //get the data from the req.body
+  //validate the data
+  //check if the user exits in the Database
+  //if yes check if the password matchs
+  //if password correct then check for accessToken and refreshToken
+  //don't send the file u don't want to send to user
+
+  const { userName, email, password } = req.body;
+
+  if (!(userName || email)) {
+    throw new ApiErrors(401, "All fields are required");
+  }
+
+  const oldUser = await User.findOne({
+    $or: [{ userName }, { email }],
+  });
+
+  if (!oldUser) {
+    throw new ApiErrors(400, "User credentials doesnot exits");
+  }
+
+  const isPasswordValid = await oldUser.isPasswordMatch(password);
+
+  if (!isPasswordValid) {
+    throw new ApiErrors(401, "Invalid user credencials");
+  }
+
+  const { refreshToken, accessToken } =
+    await generateAccessTokenAndRefreshToken(oldUser._id);
+
+  const loggedInUser = await User.findById(oldUser._id).select(
+    " -password -refreshToken"
+  );
+  // console.log("Hi line no 152");
+
+  const options = {
+    //If we sent httpOnly:true then the cookies can only be modified in Backend
+    httpOnly: true,
+    secure: true,
+  };
+  
+
+  return res
+    .status(201)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new ApiResponse(
+        200,
+        { user: loggedInUser, accessToken, refreshToken },
+        "User Logged In Successfully"
+      )
+    );
+});
+
+const logOutUser = asyncHandler(async (req, res) => {
+  await User.findByIdAndUpdate(req.user._id, {
+    $set: {
+      refreshToken: undefined,
+    },
+  });
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(201, {}, "User logged Out Successfully"));
+});
+
+export { registerUser, loginUser, logOutUser };

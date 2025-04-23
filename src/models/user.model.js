@@ -4,6 +4,12 @@ import jwt from "jsonwebtoken";
 
 import bcrypt from "bcryptjs";
 
+import dotenv from "dotenv";
+
+dotenv.config({
+  path:"./.env"
+});
+
 const userScheme = new Schema(
   {
     userName: {
@@ -66,8 +72,8 @@ userScheme.methods.isPasswordMatch = async function(password){
 }
 
 //!For Access Toke
-userScheme.methods.generateAccessToken = function(){
-    jwt.sign
+userScheme.methods.generateAccessToken = async function(){
+    await jwt.sign
     (
         {
             id:this._id,
@@ -81,12 +87,12 @@ userScheme.methods.generateAccessToken = function(){
             expiresIn:process.env.ACCESS_TOKEN_EXPIRY
         }
     )
-}
+  }
 
 
 //!For Refresh Toke
-userScheme.methods.generateRefreshToken = function(){
-    jwt.sign
+userScheme.methods.generateRefreshToken = async function(){
+    await jwt.sign
     (
         {
             id:this._id,
