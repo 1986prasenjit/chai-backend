@@ -23,6 +23,7 @@ import fs from "fs";
             //file has been uploaded successfully
             // console.log("file has been uploaded successfully");
             // console.log("File upload on Cloudinary", response.url);
+            // console.log("The error is coming from cloudinary try part mainly");
             fs.unlinkSync(localFilePath);
             return response;
         } catch (error) {
